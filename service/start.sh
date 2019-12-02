@@ -1,0 +1,2 @@
+#!/bin/sh
+node start.js
