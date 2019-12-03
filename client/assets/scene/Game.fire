@@ -85,9 +85,6 @@
       },
       {
         "__id__": 117
-      },
-      {
-        "__id__": 118
       }
     ],
     "_prefab": null,
@@ -4516,15 +4513,6 @@
     "_fitHeight": true
   },
   {
-    "__type__": "cedd9XmNKJGloeupVjPew93",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 2
-    },
-    "_enabled": true
-  },
-  {
     "__type__": "2fb8dNGSFJKrLdURYZb8jCG",
     "_name": "",
     "_objFlags": 0,
@@ -4541,6 +4529,8 @@
     "countdown": {
       "__id__": 101
     },
-    "ready": null
+    "ready": {
+      "__id__": 103
+    }
   }
 ]

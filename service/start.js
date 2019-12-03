@@ -14,14 +14,9 @@ io.on('connection', (socket) => {
     // 登陆
     socket.on('cts_login', (data) => {
         LoginManager.login(data, (msg) => {
-            socket.userId = data.userId
+            socket.join('group_hall')
             socket.emit('stc_login', msg)
         })
-    })
-
-    // 加入大厅分组
-    socket.on('group_hall', (data) => {
-        socket.join('group_hall')
     })
 
     // 同步大厅
