@@ -13,7 +13,7 @@ cc.Class({
         SocketCustom.on('stc_enter_game', this.stcEnterGame.bind(this))
 
         this.module = { games: [] }
-        // 加入大厅
+        // 加入大厅分组
         SocketCustom.emit('group_hall')
         // 同步大厅
         SocketCustom.emit('cts_sync_hall')

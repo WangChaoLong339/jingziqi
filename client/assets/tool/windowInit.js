@@ -2,7 +2,7 @@ cc.Class({
     extends: cc.Component,
 
     onLoad: function () {
-        window.socket = window.io('http://localhost:3000')
+        window.socket = window.io('http://localhost:3001')
         window.SocketCustom = require('SocketCustom')
 
         window.Clone = function (obj) {

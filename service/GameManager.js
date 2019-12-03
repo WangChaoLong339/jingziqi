@@ -28,7 +28,6 @@
     GameManager.syncGame = function (data, responds) {
         let game = GameManager.gameId2Game[GameManager.userId2GameId[data.userId]]
         // TODO 需要过滤数据
-
         responds({ err: '', game: game })
     }
     // 创建房间
@@ -57,6 +56,7 @@
         let user = { userId: data.userId, setId: game.freeSeatId.shift(), piece: game.freePiece.shift() }
         game.currUserId = game.currUserId || data.userId
         game.users.push(user)
+        GameManager.userId2GameId[data.userId] = data.gameId
 
         responds({ err: '', user: user })
     }
