@@ -63,7 +63,7 @@ cc.Class({
             return
         }
         // 如果是自己进入房间才切换场景
-        if (msg.user.userId == User.userId) {
+        if (msg.userId == User.userId) {
             cc.director.loadScene('Game')
         }
     },

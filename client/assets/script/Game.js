@@ -9,6 +9,7 @@ cc.Class({
         usersRoot: cc.Node,
         countdown: cc.Node,
         ready: cc.Node,
+        tips: cc.Node,
     },
 
     onLoad: function () {
@@ -27,7 +28,7 @@ cc.Class({
         SocketCustom.on('stc_leave_game', this.stcLeaveGame.bind(this))
         SocketCustom.on('stc_ready', this.stcReady.bind(this))
         SocketCustom.on('stc_game_start', this.stcGameStart.bind(this))
-        SocketCustom.on('stc_user_confirm', this.stcUserConfirm.bind(this))
+        SocketCustom.on('stc_user_fallen', this.stcUserFallen.bind(this))
         SocketCustom.on('stc_game_result', this.stcGameResult.bind(this))
         // 同步游戏
         SocketCustom.emit('cts_sync_game', { userId: User.userId })
@@ -40,7 +41,7 @@ cc.Class({
         SocketCustom.removeListener('stc_leave_game')
         SocketCustom.removeListener('stc_ready')
         SocketCustom.removeListener('stc_game_start')
-        SocketCustom.removeListener('stc_user_confirm')
+        SocketCustom.removeListener('stc_user_fallen')
         SocketCustom.removeListener('stc_game_result')
     },
 
@@ -57,6 +58,10 @@ cc.Class({
         SetSpriteFrame(null, this.usersRoot.PathChild('otherRoot/piece', cc.Sprite))
         // 倒计时
         this.countdown.getComponent(cc.Label).string = ''
+        // 准备按钮
+        this.ready.active = true
+        //  结束提示
+        this.tips.getComponent(cc.Label).string = ''
     },
 
     _getUserIdx: function (userId) {
@@ -74,6 +79,7 @@ cc.Class({
         for (let i = 0; i < this.game.users.length; i++) {
             let user = this.game.users[i]
             if (user.userId == User.userId) {
+                this.ready.PathChild('val', cc.Label).string = user.ready ? '取消' : '准备'
                 this.usersRoot.PathChild('myRoot/state', cc.Label).string = user.ready ? '已准备' : '请准备'
                 SetSpriteFrame(`piece${user.piece}`, this.usersRoot.PathChild('myRoot/piece', cc.Sprite))
             } else {
@@ -85,10 +91,22 @@ cc.Class({
 
     showCheckerboard: function () {
         for (var i = 0; i < this.game.qiPan.length; i++) {
-            let flag = this.game.qiPan[i]
-            flag = flag == 0 ? null : 'piece' + flag
-            SetSpriteFrame(flag, this.matchbackground.children[i].PathChild('qizi', cc.Sprite))
+            let piece = this.game.qiPan[i]
+            piece = piece == 0 ? null : 'piece' + piece
+            SetSpriteFrame(piece, this.matchbackground.children[i].PathChild('qizi', cc.Sprite))
         }
+    },
+
+    playCurrUserIdAnima: function () {
+        this.usersRoot.PathChild('myRoot/piece').stopAllActions()
+        this.usersRoot.PathChild('otherRoot/piece').stopAllActions()
+        this.usersRoot.PathChild('myRoot/piece').opacity = 255
+        this.usersRoot.PathChild('otherRoot/piece').opacity = 255
+        let animaNode = this.game.currUserId == User.userId ? this.usersRoot.PathChild('myRoot/piece') : this.usersRoot.PathChild('otherRoot/piece')
+        animaNode.runAction(cc.repeatForever(cc.sequence(
+            cc.fadeOut(1),
+            cc.fadeIn(1),
+        )))
     },
 
     stcSyncGame: function (msg) {
@@ -96,11 +114,8 @@ cc.Class({
             console.log(msg.err);
             return
         }
-        // 同步数据
+        // 同步房间数据
         this.game = msg.game
-        //
-        let idx = this._getUserIdx(User.userId)
-        this.game.my = this.game.users[idx]
         // 刷新玩家信息
         this.showUserInfo()
         // 刷新棋盘
@@ -112,9 +127,8 @@ cc.Class({
             console.log(msg.err);
             return
         }
-        if (this._getUserIdx(msg.userId) == null) {
-            this.game.users.push(msg.user)
-        }
+        // 同步房间数据
+        this.game = msg.game
         // 刷新玩家信息
         this.showUserInfo()
         // 刷新棋盘
@@ -130,8 +144,8 @@ cc.Class({
             this.game = {}
             cc.director.loadScene('Hall')
         } else {
-            let idx = this._getUserIdx(msg.userId)
-            this.game.users.splice(idx, 1)
+            // 同步房间数据
+            this.game = msg.game
             this.usersRoot.PathChild('otherRoot/state', cc.Label).string = ''
             SetSpriteFrame(null, this.usersRoot.PathChild('otherRoot/piece', cc.Sprite))
         }
@@ -142,18 +156,20 @@ cc.Class({
             console.log(msg.err);
             return
         }
-        let idx = this._getUserIdx(msg.userId)
-        this.game.users[idx].ready = msg.ready
-        // 界面层
-        if (User.userId == msg.userId) {
-            this.usersRoot.PathChild('myRoot/state', cc.Label).string = msg.ready ? '已准备' : '请准备'
-            this.ready.PathChild('val', cc.Label).string = msg.ready ? '取消' : '准备'
-        } else {
-            this.usersRoot.PathChild('otherRoot/state', cc.Label).string = msg.ready ? '已准备' : '等待中'
+        // 同步房间数据
+        this.game = msg.game
+        // 刷新玩家信息
+        this.showUserInfo()
+        if (msg.userId == User.userId) {
+            // 提示
+            this.tips.getComponent(cc.Label).string = ''
+            // 刷新棋盘
+            this.showCheckerboard()
         }
     },
 
     stcGameStart: function () {
+        this.ready.active = false
         this.countdown.runAction(cc.sequence(
             cc.callFunc(() => { this.countdown.getComponent(cc.Label).string = '3' }),
             cc.scaleTo(0.2, 1.1, 1.1),
@@ -175,28 +191,45 @@ cc.Class({
                 this.countdown.getComponent(cc.Label).string = ''
                 this.usersRoot.PathChild('myRoot/state', cc.Label).string = ''
                 this.usersRoot.PathChild('otherRoot/state', cc.Label).string = ''
+                // 棋子闪烁动画
+                this.playCurrUserIdAnima()
             }),
         ))
     },
 
-    stcUserConfirm: function (msg) {
+    stcUserFallen: function (msg) {
+        if (msg.err != '') {
+            console.log(msg.err);
+            return
+        }
+        // 同步房间数据
+        this.game = msg.game
+        // 棋子闪烁动画
+        this.playCurrUserIdAnima()
+        // 刷新棋盘
+        this.showCheckerboard()
     },
 
     stcGameResult: function (msg) {
-        this.game.currUserId = 0
-        console.log(`${msg.result == 1 ? '白' : '黑'}棋胜!!!`)
+        this.ready.PathChild('val', cc.Label).string = '准备'
+        this.ready.active = true
+        this.tips.getComponent(cc.Label).string = `${msg.game.winner == User.userId ? '我' : '对手'}胜`
+        this.tips.color = msg.game.winner == User.userId ? cc.Color.RED : cc.Color.GREEN
+        //
+        this.game.users[this._getUserIdx(User.userId)].ready = false
     },
 
     btnReady: function () {
-        SocketCustom.emit('cts_ready', { userId: User.userId, ready: !this.game.my.ready })
+        let ready = this.game.users[this._getUserIdx(User.userId)].ready
+        SocketCustom.emit('cts_ready', { userId: User.userId, ready: !ready })
     },
 
     btnItem: function (event) {
         if (this.game.currUserId != User.userId) {
             return
         }
-        let idx = event.target.idx
-        SocketCustom.emit('cts_user_confirm', { userId: User.userId, flag: this.game.users[User.userId].flag, idx: idx, });
+        let idx = this.matchbackground.children.indexOf(event.target)
+        SocketCustom.emit('cts_user_fallen', { userId: User.userId, piece: this.game.users[this._getUserIdx(User.userId)].piece, idx: idx, });
     },
 
     btnLeave: function () {
