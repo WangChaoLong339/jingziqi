@@ -7,22 +7,31 @@ cc.Class({
     },
 
     onLoad: function () {
+        this.games = []
+    },
+
+    onEnable: function () {
         // 场景监听
         SocketCustom.on('stc_sync_hall', this.stcSyncHall.bind(this))
         SocketCustom.on('stc_create_game', this.stcCreateGame.bind(this))
         SocketCustom.on('stc_enter_game', this.stcEnterGame.bind(this))
-
-        this.module = { games: [] }
         // 同步大厅
         SocketCustom.emit('cts_sync_hall')
     },
 
+    onDisable: function () {
+        // 取消监听
+        SocketCustom.removeListener('stc_sync_hall')
+        SocketCustom.removeListener('stc_create_game')
+        SocketCustom.removeListener('stc_enter_game')
+    },
+
     showGames: function () {
         this.content.removeAllChildren()
-        for (var i = 0; i < this.module.games.length; i++) {
+        for (var i = 0; i < this.games.length; i++) {
             let item = cc.instantiate(this.item)
-            item.PathChild('roomId', cc.Label).string = this.module.games[i].id
-            item.PathChild('roomOwner', cc.Label).string = `房主ID:${this.module.games[i].owner}`
+            item.PathChild('roomId', cc.Label).string = this.games[i].id
+            item.PathChild('roomOwner', cc.Label).string = `房主ID:${this.games[i].owner}`
             this.content.addChild(item)
         }
     },
@@ -32,7 +41,7 @@ cc.Class({
             console.log(msg.err)
             return
         }
-        this.module.games = msg.games || []
+        this.games = msg.games || []
         // 
         this.showGames()
     },
@@ -42,8 +51,8 @@ cc.Class({
             console.log(msg.err)
             return
         }
-        this.module.games.push(msg.game)
-        this.module.games.sort(function (a, b) { return a.id - b.id })
+        this.games.push(msg.game)
+        this.games.sort(function (a, b) { return a.id - b.id })
         // 
         this.showGames()
     },
@@ -64,7 +73,7 @@ cc.Class({
     },
 
     btnEnterRoom: function (event) {
-        let gameId = this.module.games[this.content.children.indexOf(event.target)].id
+        let gameId = this.games[this.content.children.indexOf(event.target)].id
         SocketCustom.emit('cts_enter_game', { userId: User.userId, gameId: gameId })
     },
 });

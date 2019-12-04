@@ -53,12 +53,31 @@
     GameManager.enterGame = function (data, responds) {
         let game = GameManager.gameId2Game[data.gameId]
         game.state = State.Ready
-        let user = { userId: data.userId, setId: game.freeSeatId.shift(), piece: game.freePiece.shift() }
+        let user = { userId: data.userId, seatId: game.freeSeatId.shift(), piece: game.freePiece.shift(), }
         game.currUserId = game.currUserId || data.userId
         game.users.push(user)
         GameManager.userId2GameId[data.userId] = data.gameId
 
         responds({ err: '', user: user })
+    }
+
+    // 离开房间
+    GameManager.leaveGame = function (data, responds) {
+        let game = GameManager.gameId2Game[GameManager.userId2GameId[data.userId]]
+        let user = null
+        for (var i = 0; i < game.users.length; i++) {
+            if (game.users[i].userId == data.userId) {
+                user = game.users[i]
+                game.users.splice(i, 1)
+                break
+            }
+        }
+        game.freePiece.push(user.piece)
+        game.freeSeatId.push(user.seatId)
+        game.currUserId = game.currUserId == user.userId ? 0 : game.currUserId
+        delete GameManager.userId2GameId[data.userId]
+
+        responds({ err: '', userId: user.userId, gameId: game.id })
     }
 
     module.exports = GameManager

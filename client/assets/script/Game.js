@@ -12,6 +12,13 @@ cc.Class({
     },
 
     onLoad: function () {
+        // 界面数据初始化
+        this._gameInit()
+        // 同步游戏
+        SocketCustom.emit('cts_sync_game', { userId: User.userId })
+    },
+
+    onEnable: function () {
         // 场景监听
         cc.game.on(cc.game.EVENT_HIDE, function () { console.log("进入后台"); }, this);
         cc.game.on(cc.game.EVENT_SHOW, function () { console.log("返回游戏"); }, this);
@@ -22,11 +29,19 @@ cc.Class({
         SocketCustom.on('stc_game_start', this.stcGameStart.bind(this))
         SocketCustom.on('stc_user_confirm', this.stcUserConfirm.bind(this))
         SocketCustom.on('stc_game_result', this.stcGameResult.bind(this))
-
-        // 界面数据初始化
-        this._gameInit()
         // 同步游戏
         SocketCustom.emit('cts_sync_game', { userId: User.userId })
+    },
+
+    onDisable: function () {
+        // 取消监听
+        SocketCustom.removeListener('stc_sync_game')
+        SocketCustom.removeListener('stc_enter_game')
+        SocketCustom.removeListener('stc_leave_game')
+        SocketCustom.removeListener('stc_ready')
+        SocketCustom.removeListener('stc_game_start')
+        SocketCustom.removeListener('stc_user_confirm')
+        SocketCustom.removeListener('stc_game_result')
     },
 
     _gameInit: function () {
@@ -185,6 +200,6 @@ cc.Class({
     },
 
     btnLeave: function () {
-        SocketCustom.emit('cts_leave_room', { userId: User.userId })
+        SocketCustom.emit('cts_leave_game', { userId: User.userId })
     },
 });

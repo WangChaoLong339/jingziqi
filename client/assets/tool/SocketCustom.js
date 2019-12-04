@@ -13,5 +13,9 @@
         socket.emit(name, msg);
     }
 
+    SocketCustom.removeListener = function (eventName) {
+        socket.removeEventListener(eventName)
+    }
+
     module.exports = SocketCustom
 })()

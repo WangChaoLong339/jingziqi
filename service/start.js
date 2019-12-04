@@ -36,10 +36,18 @@ io.on('connection', (socket) => {
     // 进入房间
     socket.on('cts_enter_game', (data) => {
         GameManager.enterGame(data, (msg) => {
-            socket.emit('stc_enter_game', msg)
             socket.leave('group_hall')
             socket.join(data.gameId)
-            socket.broadcast.to(data.gameId).emit('stc_enter_game', msg)
+            io.in(data.gameId).emit('stc_enter_game', msg)
+        })
+    })
+
+    // 离开房间
+    socket.on('cts_leave_game', (data) => {
+        GameManager.leaveGame(data, (msg) => {
+            io.in(msg.gameId).emit('stc_leave_game', msg)
+            socket.leave(msg.gameId)
+            socket.join('group_hall')
         })
     })
 

@@ -7,8 +7,16 @@ cc.Class({
     },
 
     onLoad: function () {
+    },
+
+    onEnable: function () {
         // 场景监听
         SocketCustom.on('stc_login', this.stcLogin.bind(this))
+    },
+
+    onDisable: function () {
+        // 取消监听
+        SocketCustom.removeListener('stc_login')
     },
 
     stcLogin: function (msg) {
@@ -16,7 +24,6 @@ cc.Class({
             console.log(msg.err)
             return
         }
-        console.log('登陆成功');
         window.User = { userId: msg.userId }
         cc.director.loadScene('Hall')
     },
