@@ -13,6 +13,11 @@ cc.Class({
     },
 
     onLoad: function () {
+        this.tipsColor = {
+            '胜利': cc.Color.RED,
+            '失败': cc.Color.BLUE,
+            '和棋': cc.Color.GREEN
+        }
         // 界面数据初始化
         this._gameInit()
         // 同步游戏
@@ -213,8 +218,16 @@ cc.Class({
     stcGameResult: function (msg) {
         this.ready.PathChild('val', cc.Label).string = '准备'
         this.ready.active = true
-        this.tips.getComponent(cc.Label).string = `${msg.game.winner == User.userId ? '我' : '对手'}胜`
-        this.tips.color = msg.game.winner == User.userId ? cc.Color.RED : cc.Color.GREEN
+        let s = ''
+        if (msg.game.winner == null) {
+            s = '和棋'
+        } else if (msg.game.winner == User.userId) {
+            s = '胜利'
+        } else {
+            s = '失败'
+        }
+        this.tips.getComponent(cc.Label).string = s
+        this.tips.color = this.tipsColor[s]
         //
         this.game.users[this._getUserIdx(User.userId)].ready = false
     },

@@ -48,6 +48,10 @@
             result = game.qiPan[4]
             console.log(`左下右上`)
         }
+        if (result == 0 && game.qiPan.indexOf(0) == -1) {
+            result = 3
+            console.log(`和棋`)
+        }
         return result
     }
 
@@ -77,7 +81,7 @@
             /* 当前操作 */currUserId: 0,
             /* 棋盘信息 */qiPan: [0, 0, 0, 0, 0, 0, 0, 0, 0],
             /* 房间状态 */state: State.None,
-            /* 胜利玩家 */winner: 0,
+            /* 胜利玩家 */winner: null,
         }
         // 绑定关系
         GameManager.gameId2Game[game.id] = game
@@ -137,7 +141,7 @@
         let r = getResult(game.id)
         if (r != 0) {
             game.state = State.Result
-            game.winner = game.currUserId
+            game.winner = r == 3 ? null : game.currUserId
             needEnd = true
         }
         game.currUserId = game.users[0].userId == game.currUserId ? game.users[1].userId : game.users[0].userId
@@ -149,6 +153,7 @@
             game.users[1].ready = false
             game.qiPan = [0, 0, 0, 0, 0, 0, 0, 0, 0]
             game.state = State.Ready
+            game.winner = null
         }
     }
 
