@@ -2,7 +2,9 @@ cc.Class({
     extends: cc.Component,
 
     onLoad: function () {
+        // 外网
         // window.socket = window.io('http://175.24.14.66:3001')
+        // 内网
         window.socket = window.io('http://localhost:3001')
 
         window.SocketCustom = require('SocketCustom')
