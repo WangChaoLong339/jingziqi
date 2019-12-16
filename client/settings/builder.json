@@ -19,7 +19,7 @@
     "portrait": true,
     "upsideDown": false
   },
-  "packageName": "org.cocos2d.helloworld",
+  "packageName": "com.wangchaolong.jzq",
   "privateKey": "",
   "qqplay": {
     "REMOTE_SERVER_ROOT": "",
